@@ -3,16 +3,12 @@ from PIL import ImageTk
 from tkinter import *
 import PIL.Image
 import joblib
+import nltk
 from sklearn.base import TransformerMixin
 from sklearn.pipeline import Pipeline
-import spacy
-from spacy.lang.en import English
+from nltk.stem import WordNetLemmatizer
+from nltk.tokenize import TreebankWordTokenizer
 import string
-
-punctuations = string.punctuation
-nlp = spacy.load("en_core_web_lg")
-stop_words = spacy.lang.en.stop_words.STOP_WORDS
-parser = English()
 
 
 class predictors(TransformerMixin):
@@ -34,18 +30,24 @@ def clean_text(text):
     return text_without_punctuation.lower()
     #return text.strip().lower()
 
-# Tokenizer function
-def spacy_tokenizer(sentence):
-    mytokens = parser(sentence)
-    mytokens = [ word.text for word in mytokens ]
-    # remove stop words
-    mytokens = [ word for word in mytokens if word not in stop_words and word not in punctuations ]
-    # return preprocessed list of tokens
-    return mytokens
+def treebankWordTokenizer(sentence):
 
+    tokenizer = TreebankWordTokenizer()
+    lemmatizer = WordNetLemmatizer()
+
+    # Tokenize the sentence
+    tokens = tokenizer.tokenize(sentence)
+
+    # Lemmatize each token
+    lemmatized_tokens = [lemmatizer.lemmatize(token) for token in tokens]
+
+    return lemmatized_tokens
+
+root = tk.Tk()
+root.title("Sexism relevation")
 
 def getPrediction():
-    
+
     input_text = text_box.get("1.0", "end-1c")
     input_text=[input_text]
         
@@ -59,16 +61,8 @@ def getPrediction():
     text_box.delete("1.0", tk.END)
     pred_label.grid(columnspan=3,column=1,row=10)
 
-
-
-sModel = joblib.load('../sexism_model.pkl')
-cModel = joblib.load('../category_model.pkl')
-
-#begin of the interface
-root = tk.Tk()
-root.title("Sexism relevation")
-
-
+sModel = joblib.load('../sexism.pkl')
+cModel = joblib.load('../category.pkl')
 
 canv= tk.Canvas(root,width=600,height=300)
 canv.grid(columnspan=5,rowspan=20)
@@ -89,9 +83,6 @@ text_box = Text(root,height=3, width=40)
 text_box.config(state='normal')  
 #box_label = tk.Label(root, text=text_box)
 text_box.grid(columnspan=3,column=1,row=8)
-
-
-
 
 # Get the user input from the Text widget
 pred_label=tk.Label(root, text="", font="Raleway")
